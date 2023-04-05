@@ -4,9 +4,9 @@ _Authors: Marian Gimeno, Katyna Sada and Angel Rubio_
 
 _Date: 21-12-2022_
 
-  <p align="center">
+<p align="center">
     <a href="https://github.com/KatynaSada/InterpretableAIReview/issues">Request Feature</a>
-  </p>
+</p>
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -18,8 +18,9 @@ _Date: 21-12-2022_
         <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
-    <li>
-      
+  </ol>
+</details>
+
 <!-- ABOUT THE PROJECT -->
 # About The Project
 
