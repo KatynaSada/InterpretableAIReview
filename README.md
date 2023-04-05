@@ -4,7 +4,39 @@ _Authors: Marian Gimeno, Katyna Sada and Angel Rubio_
 
 _Date: 21-12-2022_
 
+  <p align="center">
+    <a href="https://github.com/KatynaSada/InterpretableAIReview/issues">Request Feature</a>
+  </p>
 
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      
+<!-- ABOUT THE PROJECT -->
+# About The Project
+
+ <p align="center"><img src="images/network.png" width="700" alt="Logo"></p>
+
+Great efforts have been made to develop Precision Medicine (PM)-based treatments using Machine Learning. In this field, where the goal is to provide the optimal treatment for each patient based on his/her medical history and genomic characteristics, it is not sufficient to make excellent predictions. The challenge is to understand and trust the model's decisions while also being able to easily implement it. However, one of the issues with machine learning algorithms -particularly deep learning- is their lack of interpretability. This review compares six different machine learning methods to provide guidance for defining interpretability by focusing on: Accuracy, Multi-omics Capability, Explainability, and Implementability. Our selection of algorithms includes tree, regression, and kernel based methods, which we selected for their ease of interpretation for the clinician. We also included two novel explainable methods in the comparison. No significant differences in accuracy were observed when comparing the methods, but an improvement was observed when using gene expression instead of mutational status as input for these methods. We concentrated on the current intriguing challenge: model comprehension and ease of use. Our comparison suggests that the tree-based methods are the most interpretable of those tested.
+      
+<p align="right">(<a href="#About-The-Project">back to top</a>)</p>
+
+
+### Built With
+
+*   <a href="https://www.python.org/">
+      <img src="images/python.png" width="110" alt="python" >
+    </a>
+
+<p align="right">(<a href="#About-The-Project">back to top</a>)</p>
 
 ## Loading Libraries and Packages
 
