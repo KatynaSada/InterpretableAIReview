@@ -1,0 +1,26 @@
+{
+    "id": "67BEA797",
+    "path": "C:/Users/ksada/OneDrive - Tecnun/interpretable-ai-review/MOM/2022-05-24_Main_MOM-kfold_CV.R",
+    "project_path": "MOM/2022-05-24_Main_MOM-kfold_CV.R",
+    "type": "r_source",
+    "hash": "1609053667",
+    "contents": "",
+    "dirty": false,
+    "created": 1678193072945.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "233,0",
+        "scrollLine": "179"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1678191510,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1678191510,
+    "read_only": false,
+    "read_only_alternatives": []
+}

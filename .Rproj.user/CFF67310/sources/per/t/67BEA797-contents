@@ -1,0 +1,315 @@
+################################################################################
+# MOM K-fold Cross Validation
+# Author: Marian Gimeno email:mgimenoc@unav.es
+# Supervisor: Angel Rubio
+################################################################################
+
+
+
+library(reticulate)
+# use_python("C:/Users/mgimenoc/Anaconda3/envs/Tesis/python.exe")
+use_python("C:/Users/ksada/Anaconda3/envs/AML_Patients_PHD/python.exe")
+
+library(impute)
+library(knitr)
+library(reticulate)
+library(readxl)
+library(readr)
+library(limma)
+library(ggplot2)
+library(ggpubr)
+library(matrixStats)
+library(maftools)
+library(qvalue)
+library(tibble)
+library(Rtsne)
+library(IHW)
+library(matrixStats)
+library(pheatmap)
+library(DT)
+library("dplyr")
+
+source("./MOM/2022-05-24_MOM_source_Functions.R")
+
+
+# Load mutational data----------------------------------------------------------
+
+gene_variants<-read_excel("./data/input/41586_2018_623_MOESM3_ESM.xlsx",
+                          sheet="Table S7-Variants for Analysis")
+clinical <- read_excel("./data/input/41586_2018_623_MOESM3_ESM.xlsx",
+                       sheet = "Tabe S5-Clinical Summary")
+
+# Load drug sensitivity data----------------------------------------------------
+
+Drug_response<-read_excel("./data/input/41586_2018_623_MOESM3_ESM.xlsx",
+                          sheet="Table S10-Drug Responses")
+
+
+
+
+# Pre-processing Step-----------------------------------------------------------
+
+# Build Drug Matrix
+
+Drug<-matrix(data="NA",nrow=length(unique(Drug_response$inhibitor)), 
+             ncol=length(unique(Drug_response$lab_id)))
+
+colnames(Drug)<-as.character(unique(Drug_response$lab_id))
+rownames(Drug)<-unique(Drug_response$inhibitor)
+
+
+for(i in as.character(unique(Drug_response$lab_id))){
+  ind<-which(Drug_response$lab_id==i)
+  D<-as.character(Drug_response$inhibitor[ind])
+  Drug[D, i]<-Drug_response$ic50[ind]
+}
+
+#Identifying missing values
+
+is.na(Drug) <- Drug == "NA"
+
+#change number formatting
+
+for(i in 2:(dim(Drug)[2]-1)){
+  Drug[,i]<-as.numeric(as.character(Drug[,i]))
+}
+
+# Building Mutation Matrix......................................................
+Mutations<-matrix(0, nrow=length(unique(gene_variants$labId)), 
+                  ncol=length(unique(gene_variants$symbol)))
+
+rownames(Mutations)<-as.character(unique(gene_variants$labId))
+colnames(Mutations)<-as.character(unique(gene_variants$symbol))
+
+
+for(i in as.character(unique(gene_variants$labId))){
+  jj<-unique(as.character(gene_variants$symbol[which(gene_variants$labId==i)]))
+  Mutations[i, jj]<-1  
+}
+
+# Add Translocations 
+
+translocations_clinical<-clinical[,c("LabId","specificDxAtAcquisition")][grep("AML with inv", clinical$specificDxAtAcquisition),]
+
+translocations_clinical<-rbind(translocations_clinical,clinical[,c("LabId","specificDxAtAcquisition")][grep("AML with t", clinical$specificDxAtAcquisition),])
+
+trans<-as.character(unique(translocations_clinical$specificDxAtAcquisition))
+add<-matrix(0, nrow=nrow(Mutations), ncol=length(trans))
+colnames(add)<-trans
+rownames(add)<-rownames(Mutations)
+
+for(j in colnames(add)){
+  p<-translocations_clinical$LabId[which(translocations_clinical$specificDxAtAcquisition ==j)]
+  p<-p[which(p %in% rownames(add))]
+  add[p,j]<-1
+}
+
+trans<-sapply(trans, function(X){unlist(strsplit(X, split = "; "))[2]})
+colnames(add)<-trans
+Mutations<-cbind(Mutations,add)
+
+# Combining Matrices and Imputation---------------------------------------------
+print("Processing Mutations and Drugs Matrices")
+Drug_2<-as.matrix(t(Drug))
+Mutations<-as.matrix(Mutations)
+
+# impute missing values
+
+if (sum(is.na(Drug_2))>0){
+  Drug_3<-Drug_2[-which((rowSums(is.na(Drug_2))/dim(Drug_2)[2])>0.8),
+                 -which((colSums(is.na(Drug_2))/dim(Drug_2)[1])>0.7)]
+  Out<-impute.knn(as.matrix(Drug_3), k = 10, rowmax = 0.8, 
+                  colmax = 0.75, maxp = 1500, rng.seed=362436069)
+  Drug_4<-Out$data[, -which(colnames(Out$data) %in% c("Elesclomol","JNJ-7706621"))]
+  
+}else{
+  Drug_4<-Drug_2[, -which(colnames(Drug_2) %in% c("Elesclomol","JNJ-7706621"))]
+}
+
+
+# Combining Drug and mutational Data
+  patients<-rownames(Mutations)[which(rownames(Mutations) %in% rownames(Drug_4))]
+  
+  mut<-Mutations[patients,colSums(Mutations[patients, ])>0]
+  mut2<-mut[, colSums(mut)>0.01*length(patients)]
+  
+  sum(colSums(mut2)<1)
+  rm(mut)
+  
+  drug<-Drug_4[patients,]
+  drug<-log10(drug)-1
+  drug <- t(t(drug) - colMeans(drug))
+  maximum_drug_correction<-max(drug)
+  drug<-drug-maximum_drug_correction
+  
+  
+# CV-Data Splitting-------------------------------------------------------------
+
+
+patient_names<-rownames(drug)
+
+# drug_ori<-drug
+# mut_ori<-mut
+# 
+# identical(colnames(drug), colnames(drug_ori))
+# set.seed()
+  
+patient_names<-cbind(patient_names, kfold=sample(1:5,length(patient_names), replace=TRUE))
+patient_names<-as.data.frame(patient_names)
+
+# pat_kfold<-as.character(patient_names$patient_names[which(patient_names$kfold==11)])
+# patient_final_Validation_drug<-drug[pat_kfold,]
+# patient_final_Validation_mut<-mut[pat_kfold,]
+
+
+drug_ori<-drug
+mut_ori<-mut2
+
+
+sensi<-vector(mode="list", length=10)
+Results_list<-vector(mode="list", length=10)
+
+
+
+Results_CV_pat<-NULL
+
+
+# CV Code-----------------------------------------------------------------------
+
+kfold<-1
+
+for(kfold in 1:5){
+  
+  cat(sprintf("##### \n \n FOLD %s/5 \n\n######\n\n", kfold))
+  patient_names_kfold<-as.character(patient_names$patient_names[which(as.numeric(patient_names$kfold)==kfold)])
+  kfold_validation_drug<-drug_ori[c(patient_names_kfold),]
+  kfold_validation_mut<-mut_ori[patient_names_kfold,]
+  
+  drug<-drug_ori[-c(which(rownames(drug_ori) %in% patient_names_kfold)),]
+  mut<-mut_ori[-c(which(rownames(mut_ori) %in% patient_names_kfold)),]
+  mut<-mut[,colSums(mut)>0.01*nrow(mut)]
+  
+  Result<-getBMeffect_F(Mutations = mut, Drug=drug)
+  output<-Get_Treatment_OptimizationMatrix(BM_Result = Result, Drug = drug, Mutations = mut)
+  
+  IC50<-output$`IC50*`
+  PT<-output$PT
+  P<-nrow(PT)
+  Treat<-ncol(PT)
+  S<-4
+  sol_pat<-MOM_MILP(IC50, PT)
+  
+  MILP_classification<-Extract_results(sol_pat, PT)
+  
+  Prediction<-CV_Prediction(MILP_classification = MILP_classification, 
+                            kfold_validation_drug = kfold_validation_drug,
+                            kfold_validation_mut = kfold_validation_mut )
+  
+  Prediction$Fold<-kfold
+  Results_CV_pat<-rbind(Results_CV_pat, Prediction)
+  
+}
+
+
+# save(validation_fold_ic50, file = "./data/output/2022-05-19_CVResults_IC50_individual_AMLPat.RData")
+
+### COMPARISON AGAINST ORACLE---------------------------------------------------
+drug<-drug_ori-min(drug_ori)
+
+
+
+ORACLE<- apply(drug, 1, which.min)
+identical(names(ORACLE), rownames(drug))
+ORACLE<-as.data.frame(ORACLE)
+ORACLE$Drug<-colnames(drug)[ORACLE[,1]]
+ORACLE$Patient<-rownames(ORACLE)
+
+aux<-apply(ORACLE, 1, FUN=function(X){return(IC50<-drug[X[3], X[2]])})
+
+ORACLE$IC50<-aux[rownames(ORACLE)]
+
+MOM<-Results_CV_pat
+MOM$IC50<-MOM$IC50-min(drug_ori)
+
+boxplot(ORACLE$IC50, MOM$IC50, names = c("ORACLE", "MOM"), ylab="IC50*", ylim=c(0,5))
+
+ORACLE_plot<-data.frame(Drug=ORACLE$Drug, 
+                        Mut=NA, 
+                        IC50=ORACLE$IC50, 
+                        Pat_name=ORACLE$Patient,
+                        Fold=NA,
+                        Method="ORACLE")
+
+ORACLE_plot<-rbind(ORACLE_plot,cbind(MOM, Method="MOM"))
+
+
+ggplot(ORACLE_plot, aes(x=Method, y=IC50, fill=Method))+geom_boxplot()+theme_bw()+ylim(0,5)+ylab("IC50*")
+
+
+
+MOM$DeltaIC50<-abs(MOM$IC50-ORACLE$IC50[na.omit(match(ORACLE$Patient,MOM$Pat_name))])
+MOM$Score<-median(MOM$DeltaIC50)
+
+
+
+
+# save(MOM, ORACLE, file="./data/output/mom_COMPARISON.RData")
+
+
+# Train the model with all the data---------------------------------------------
+
+
+
+mut<-mut2
+Result<-getBMeffect_F(Mutations = mut, Drug=drug)
+output<-Get_Treatment_OptimizationMatrix(BM_Result = Result, Drug = drug, Mutations = mut)
+
+IC50<-output$`IC50*`
+PT<-output$PT
+P<-nrow(PT)
+Treat<-ncol(PT)
+S<-4
+tic()
+sol_pat<-MOM_MILP(IC50, PT)
+toc()
+
+MILP_classification<-Extract_results(sol_pat, PT)
+
+Prediction<-CV_Prediction(MILP_classification = MILP_classification, 
+                          kfold_validation_drug = kfold_validation_drug,
+                          kfold_validation_mut = kfold_validation_mut )
+
+
+# Accuracy and sensitivity Values-----------------------------------------------
+
+source("./MOM/predictMOM_ALL.R")
+
+Treatment<-predictMOM_ALL(mut2)
+TreatmentNames_MOM<-colnames(drug)[Treatment$Treatment]
+
+k<-round(0.05*ncol(drug))
+
+Oracle<-vector(mode="list", nrow(output$`IC50*`))
+names(Oracle)<-rownames(output$`IC50*`)
+
+for(i in 1:nrow(output$`IC50*`)){
+  or<-sort(output$`IC50*`[i,], decreasing = F)
+  or<-or[1:k]
+  names(or)<-sapply(names(or), FUN=function(X){return(unlist(strsplit(X, split="_"))[1])})
+  Oracle[[i]]<-or
+}
+
+identical(names(Oracle), Treatment$CLs) # True
+
+
+
+for(i in 1:nrow(drug)){
+  
+  
+  
+}
+
+
+
+
+

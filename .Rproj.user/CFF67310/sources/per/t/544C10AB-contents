@@ -1,0 +1,22 @@
+predictMOM_ALL<-function(Mutations){
+  cat("\n\n Assuming Optimal BeatAML Classification \n \n")
+  
+  Treatment<-data.frame(CLs=rownames(Mutations),
+                        Treatment=NA)
+  
+  for(i in 1:nrow(Mutations)){
+    if(Mutations[i, "FLT3"]>0){
+      Treatment$Treatment[i]<-80
+    }else if (Mutations[i, "FLT3"]<1 & Mutations[i, "CBFB-MYH11"]>0){
+      Treatment$Treatment[i]<-101
+    }else if (Mutations[i, "FLT3"]<1 & Mutations[i, "CBFB-MYH11"]<1 & Mutations[i, "NRAS"]>0){
+      Treatment$Treatment[i]<-94
+    }else{
+      Treatment$Treatment[i]<-22
+    }
+  }
+  
+  
+  return(Treatment)
+  
+}
