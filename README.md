@@ -39,6 +39,9 @@ Great efforts have been made to develop Precision Medicine (PM)-based treatments
 
 <p align="right">(<a href="#About-The-Project">back to top</a>)</p>
 
+<!-- PROJECT CODE -->
+# Project code
+
 ## Loading Libraries and Packages
 
 The first part is to load all the libraries and external functions that are required for the analysis.
@@ -1333,4 +1336,4 @@ gg_ex_mut
 ```
 </details>
 
-
+<p align="right">(<a href="#Project-Code">back to top</a>)</p>
