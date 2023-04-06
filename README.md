@@ -36,7 +36,7 @@ Great efforts have been made to develop Precision Medicine (PM)-based treatments
 
 ### Built With
 *   <a href="https://www.r-project.org/">
-      <img src="images/r.png" width="110" alt="python" >
+      <img src="images/r.png" width="110" alt="R" >
     </a>  
 *   <a href="https://www.python.org/">
       <img src="images/python.png" width="110" alt="python" >
