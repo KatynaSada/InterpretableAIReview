@@ -6,7 +6,7 @@ library(rsvg) # save plot niceTree
 ## Functions for XAI
 ###########################################
 
-source("Code_Analysis/myBOSO.r")
+source("Code_Analysis/BOSO.r")
 
 ### Optimizing trees
 findsplitExp <- function(C, Expression, minimum = 1, weights=NULL, verbose = F) {
@@ -522,7 +522,7 @@ plotIntragroup <- function(chosen_method, color, Validation_Beat, drug_response,
   # if (num_plots < 5) {
   #   num_plots <- 7
   # }
-  # ggsave(paste(folder_dir, "Rimages/intragroup_", chosen_method, "_", dataset, ".png", sep = ""), gg_drug_plots, width = num_plots * 1.6, height = num_plots * 1.3, dpi = 1000)
-  ggsave(paste(folder_dir, "Rimages/intragroup_", chosen_method, "_", dataset, ".png", sep = ""), gg_drug_plots, width = 12, height =12, dpi = 1000) # width = 5.5, height = 7.5 for beataml and h=6 for GDSC
+  # ggsave(paste(folder_dir, "/images/intragroup_", chosen_method, "_", dataset, ".png", sep = ""), gg_drug_plots, width = num_plots * 1.6, height = num_plots * 1.3, dpi = 1000)
+  ggsave(paste(folder_dir, "/images/intragroup_", chosen_method, "_", dataset, ".png", sep = ""), gg_drug_plots, width = 12, height =12, dpi = 1000) # width = 5.5, height = 7.5 for beataml and h=6 for GDSC
   return(gg_drug_plots)
 }
