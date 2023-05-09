@@ -34,7 +34,7 @@ library(tictoc)
 windowsFonts("Roboto" = windowsFont("Roboto"))
 
 # Folder to save results
-folder_dir <- "C:/Users/ksada/OneDrive - Tecnun/Paper XAI Methods/Rresults/"
+folder_dir <- "./data/output"
 
 # Loading Data -------------------------------------------- 
 # Load clinical data 
@@ -175,7 +175,6 @@ mutations <- mutations[keep_subjects,]
 expression <- expression[,keep_subjects]
 clinical <- clinical[keep_subjects,]
 
-
 table(clinical$cohort)
 
 # Filter: keep only mutations present in at least 1% of patients 
@@ -183,10 +182,10 @@ mutations<-mutations[, colSums(mutations)>0.01*nrow(mutations)]
 
 # IC50* Calculation 
 drug<-log10(drug_matrix_4)-1
-drug <- t(t(drug) - colMeans(drug, na.rm=T))  # unificar los farmacos por columnas, compensamos con la dosis
+drug <- t(t(drug) - colMeans(drug, na.rm=T))  # unify the drugs by columns, we compensate with the dosage
 
-drug_response_matrix_MOM<-drug-max(drug,na.rm = T)  # MOM minimiza en vez de maximizar 
-drug_response_matrix <- drug - min(drug) # por como funciona MOM los valores tiene que ser todos 
+drug_response_matrix_MOM<-drug-max(drug,na.rm = T)  # MOM minimizes, the values must all be positive.
+drug_response_matrix <- drug - min(drug) # 
 
 drug_matrix_KRL <- apply(drug_matrix_2,2,as.numeric)
 rownames(drug_matrix_KRL)<-rownames(drug_matrix_2[keep_subjects,])
@@ -293,11 +292,11 @@ for (group in 1:folds) {
 
 # save(ODTMut, ODTSqrtMut, MnLassoMut,LassoMut, BOSOMut, file = paste(folder_dir,"Rdata/mutations_models.RData",sep=""))
 # save(treatmentODTMut, treatmentODTSqrtMut, treatmentMnLassoMut, treatmentLassoMut, treatmentBOSOMut, file = paste(folder_dir,"Rdata/mutations_results.RData",sep=""))
-load(paste(folder_dir,"Rdata/mutations_models.RData",sep=""))
-load(paste(folder_dir,"Rdata/mutations_results.RData",sep=""))
+load(paste(folder_dir,"/mutations_models.RData",sep=""))
+load(paste(folder_dir,"/mutations_results.RData",sep=""))
 
-# load(paste(folder_dir,"Rdata/MOM_model.RData",sep="")) # model
-load(paste(folder_dir,"Rdata/MOM_results.RData",sep="")) # predictions
+# load(paste(folder_dir,"/MOM_model.RData",sep="")) # model
+load(paste(folder_dir,"/MOM_results.RData",sep="")) # predictions
 
 # KRL
 KRL_results_cv <- read_csv("data/output/KRL_results_5cv_BeatAML2.csv")
@@ -335,7 +334,7 @@ treatment_plot_gg <- ggplot(treatment_plot, aes(x=Method, y=IC50, fill=Method)) 
         legend.position = "NULL")+
   ylim(0, 5)
 treatment_plot_gg
-ggsave(paste(folder_dir,"Rimages/boxplot_mutations.png",sep=""), treatment_plot_gg, width = 8, height = 7, dpi = 1000)
+ggsave(paste(folder_dir,"/images/boxplot_mutations.png",sep=""), treatment_plot_gg, width = 8, height = 7, dpi = 1000)
 
 treatment_plot_violin <- ggplot(treatment_plot, aes(x=Method, y=IC50, fill=Method)) +
   geom_violin(lwd=0.8,position=position_dodge(0.8)) +
@@ -354,7 +353,7 @@ treatment_plot_violin <- ggplot(treatment_plot, aes(x=Method, y=IC50, fill=Metho
         )+
   ylim(0, 5)
 treatment_plot_violin
-ggsave(paste(folder_dir,"Rimages/violin_mutations.png",sep=""), treatment_plot_violin, width = 8, height = 7, dpi = 1000)
+ggsave(paste(folder_dir,"/images/violin_mutations.png",sep=""), treatment_plot_violin, width = 8, height = 7, dpi = 1000)
 
 # Compute wilcoxon tests 
 with(treatment_plot,                       # Order boxes by median
@@ -435,14 +434,14 @@ toc()
 
 # save(treatmentODTMut_w34, treatmentODTSqrtMut_w34, treatmentMnLassoMut_w34, treatmentLassoMut_w34, treatmentBOSOMut_w34, file = paste(folder_dir,"Rdata/mutations_results_test.RData",sep=""))
 # save(ODTMut_All, ODTSqrtMut_All, MnLassoMut_All, LassoMut_All,BOSOMut_All, file = paste(folder_dir,"Rdata/mutations_models_all.RData",sep=""))
-load(paste(folder_dir,"Rdata/mutations_results_test.RData",sep=""))
-load(paste(folder_dir,"Rdata/mutations_models_all.RData",sep=""))
+load(paste(folder_dir,"/mutations_results_test.RData",sep=""))
+load(paste(folder_dir,"/mutations_models_all.RData",sep=""))
 
-load(paste(folder_dir,"Rdata/MOM_model_all.RData",sep="")) # model
-load(paste(folder_dir,"Rdata/MOM_results_test.RData",sep="")) # predictions
+load(paste(folder_dir,"/MOM_model_all.RData",sep="")) # model
+load(paste(folder_dir,"/MOM_results_test.RData",sep="")) # predictions
 
 # KRL
-treatmentKRL_w34 <- read_csv("data/output/KRL_results_w34_BeatAML2.csv")
+treatmentKRL_w34 <- read_csv(paste(folder_dir, "/KRL_results_w34_BeatAML2.csv",sep=""))
 treatmentKRL_w34$`Best Drug`<-treatmentKRL_w34$`Best Drug`+1 
 treatmentKRL_w34$IC50<-drug_response_w34[cbind(treatmentKRL_w34$Patients, treatmentKRL_w34$DrugName)]
 
@@ -457,7 +456,6 @@ treatment_plot_test<-rbind(treatment_plot_test,data.frame(Method="LassoMut", IC5
 treatment_plot_test<-rbind(treatment_plot_test,data.frame(Method="BOSOMut", IC50=drug_response_w34[cbind(1:nrow(drug_response_w34), treatmentBOSOMut_w34)]))
 treatment_plot_test<-rbind(treatment_plot_test,data.frame(Method="MOM", IC50=treatmentMOM_w34$IC50))
 treatment_plot_test<-rbind(treatment_plot_test,data.frame(Method="KRL", IC50=treatmentKRL_w34$IC50)) # CAMBIAR
-
 
 treatment_plot_test$Method<-factor(treatment_plot_test$Method, levels=c("ORACLE", "MOM","KRL", "BOSOMut", "ODTMut","ODTSqrtMut", "LassoMut", "MnLassoMut"))
 
@@ -477,7 +475,7 @@ treatment_plot_test_gg <- ggplot(treatment_plot_test, aes(x=Method, y=IC50, fill
         legend.position = "NULL")+
   ylim(0, 5)
 treatment_plot_test_gg
-ggsave(paste(folder_dir,"Rimages/boxplot_mutations_test.png",sep=""), treatment_plot_test_gg, width = 8, height = 7, dpi = 1000)
+ggsave(paste(folder_dir,"/images/boxplot_mutations_test.png",sep=""), treatment_plot_test_gg, width = 8, height = 7, dpi = 1000)
 
 with(treatment_plot_test,                       # Order boxes by median
      reorder(Method,
@@ -538,46 +536,14 @@ Validation_Beat <- data.frame(
 methods <- unique(treatment_plot_test$Method)[-1]
 colors2 <-  c("#FDE5B0", "#F3908B", "#8E4884", "#E36192", "#96D6B6", "#367592","#39A7AE")
 
-n <- 7
+n <- 1 # choose method to plot
 gg_drug_plots <- plotIntragroup(methods[n],colors2[n],Validation_Beat,drug_response_w34,"BeatAML2")
 gg_drug_plots
 
+# Plot all methods
 for (i in 1:length(methods)) {
   gg_drug_plots <- plotIntragroup(methods[i],colors2[i],Validation_Beat,drug_response_w34,"BeatAML2")
-  
 }
-
-# Plot_aux_MOM<-Validation_Beat[Validation_Beat$Method=="MOM",] # matriz de mutaciones que sea distinta tiene que tener 64
-# Plot_aux_oracle<-Validation_Beat[Validation_Beat$Method=="ORACLE",]
-# Plot_aux <- merge(Plot_aux_MOM,Plot_aux_oracle, by="patients")
-# Plot_aux$delta <- Plot_aux$IC50.x - Plot_aux$IC50.y
-# Plot_aux$delta <- Plot_aux$IC50.x
-# MOM_plots<-NULL
-
-# for(j in 1:length(unique(Plot_aux$drug.x))){
-#   d<-unique(Plot_aux$drug.x)[j]
-#   ind<-Plot_aux$drug.x==d
-#   plotDrug<-data.frame(Drug=j,
-#                        drugname=d,
-#                        Patients=Plot_aux$patients,
-#                        IC50=NA,
-#                        Recommended="No")
-
-#   plotDrug$Recommended[ind]<-"Yes"
-#   plotDrug$IC50[ind]<-Plot_aux$delta[ind]
-#   plotDrug$IC50[!ind]<-drug_response_w34[!ind, d]
-#   plotDrug$Recommended[!ind]<-"NO"
-
-#   MOM_plots<-rbind(MOM_plots,plotDrug)
-
-# }
-
-# gg1_validation_beat<-ggplot(MOM_plots, aes(x=Recommended, y=IC50, fill=Recommended))+
-#   geom_boxplot()+facet_wrap(~drugname)+theme_bw()+
-#   scale_fill_npg()+stat_compare_means(vjust = 1)+ylab("IC50*")+ggtitle("MOM")
-
-# gg1_validation_beat
-
 
 ############################################################
 # Multiomics in BeatAML: Expression models
@@ -602,7 +568,7 @@ expression_w12 <- t(expression_w12)
 expression_w34 <- expression_w34[keep,] # keep same genes in both matrices
 expression_w34 <- t(expression_w34)
 
-### Train Models with expression Data
+### Train Models with expression data
 library(robustbase)
 set.seed(2022)
 folds <- 5
@@ -649,8 +615,8 @@ for (group in 1:folds) {
 }
 # save(ODT, ODTSqrt, MnLasso,Lasso, BOSO, file = paste(folder_dir,"Rdata/expression_models.RData",sep=""))
 # save(treatmentODTExp, treatmentODTSqrtExp, treatmentMnLassoExp, treatmentLassoExp, treatmentBOSOExp, file = paste(folder_dir,"Rdata/expression_results.RData",sep=""))
-load(paste(folder_dir,"Rdata/expression_models.RData",sep=""))
-load(paste(folder_dir,"Rdata/expression_results.RData",sep=""))
+load(paste(folder_dir,"/expression_models.RData",sep=""))
+load(paste(folder_dir,"/expression_results.RData",sep=""))
 
 treatmentOracle <- apply(drug_response_w12, 1, which.min)
 
@@ -685,8 +651,6 @@ plot_Ex_Mut$General_Method[grep("ODTSqrt", plot_Ex_Mut$Method)]<-"ODTSqrt"
 plot_Ex_Mut$General_Method[grep("Lasso", plot_Ex_Mut$Method)]<-"Lasso"
 plot_Ex_Mut$General_Method[grep("MnLasso", plot_Ex_Mut$Method)]<-"MnLasso"
 
-# plot_Ex_Mut<-rbind(plot_Ex_Mut, data.frame(Method=NA, IC50=5, Type="Mut", General_Method="MOM"))
-
 plot_Ex_Mut$Method<-factor(plot_Ex_Mut$Method, levels=c("Oracle",
                                                         "BOSOExp","BOSOMut",
                                                         "ODTSqrtExp","ODTSqrtMut",
@@ -719,7 +683,7 @@ gg_ex_mut<-ggplot(plot_Ex_Mut, aes(x=Method, y=IC50, fill=General_Method))+
 # ylim(0, 6)
 gg_ex_mut
 
-ggsave(paste(folder_dir,"Rimages/boxplot_both.png",sep=""), gg_ex_mut, width = 14, height = 6, dpi = 1000)
+ggsave(paste(folder_dir,"/images/boxplot_both.png",sep=""), gg_ex_mut, width = 14, height = 6, dpi = 1000)
 
 wilcox.test(plot_Ex_Mut$IC50[plot_Ex_Mut$Method=="MnLassoExp"], 
             plot_Ex_Mut$IC50[plot_Ex_Mut$Method=="ODTSqrtExp"], alternative="less")
@@ -769,8 +733,8 @@ treatmentOracle_w34 <- apply(drug_response_w34, 1, which.min)
 
 # save(ODTExp_All, ODTSqrtExp_All, MnLassoExp_All,LassoExp_All, BOSOExp_All, file = paste(folder_dir,"Rdata/expression_models_all.RData",sep=""))
 # save(treatmentODTExp_w34, treatmentODTSqrtExp_w34, treatmentMnLassoExp_w34,treatmentLassoExp_w34, treatmentBOSOExp_w34, file = paste(folder_dir,"Rdata/expression_results_test.RData",sep=""))
-load(paste(folder_dir,"Rdata/expression_models_all.RData",sep=""))
-load(paste(folder_dir,"Rdata/expression_results_test.RData",sep=""))
+load(paste(folder_dir,"/expression_models_all.RData",sep=""))
+load(paste(folder_dir,"/expression_results_test.RData",sep=""))
 
 ### Plotting BeatAML Cross-validation Results and comparing means difference
 treatment_plot_test_exp<-data.frame(Method="ORACLE", IC50=drug_response_w34[cbind(1:nrow(drug_response_w34),treatmentOracle_w34)])
@@ -794,7 +758,7 @@ treatment_plot_test_exp_gg <- ggplot(treatment_plot_test_exp, aes(x=Method, y=IC
         panel.background = element_rect(fill = "transparent"))+
   ylim(0, 4)
 treatment_plot_test_exp_gg
-ggsave(paste(folder_dir,"Rimages/boxplot_expression_test.png",sep=""), treatment_plot_test_exp_gg, width = 10, height = 6, dpi = 1000)
+ggsave(paste(folder_dir,"/images/boxplot_expression_test.png",sep=""), treatment_plot_test_exp_gg, width = 10, height = 6, dpi = 1000)
 
 
 wilcox.test(treatment_plot_test_exp$IC50[treatment_plot_test_exp$Method=="MnLassoExp"], 
@@ -871,8 +835,8 @@ for (group in 1:folds) {
 }
 # save(ODTBoth, ODTSqrtBoth, MnLassoBoth,LassoBoth, BOSOBoth, file = paste(folder_dir,"Rdata/both_models.RData",sep=""))
 # save(treatmentODTBoth, treatmentODTSqrtBoth, treatmentMnLassoBoth, treatmentLassoBoth, treatmentBOSOBoth, file = paste(folder_dir,"Rdata/both_results.RData",sep=""))
-load(paste(folder_dir,"Rdata/both_models.RData",sep=""))
-load(paste(folder_dir,"Rdata/both_results.RData",sep=""))
+load(paste(folder_dir,"/both_models.RData",sep=""))
+load(paste(folder_dir,"/both_results.RData",sep=""))
 
 treatmentOracle <- apply(drug_response_w12, 1, which.min)
 
@@ -904,7 +868,6 @@ colnames(treatments2) <- c(
   "ODTMut", "ODTSqrtMut", "MnLassoMut", "LassoMut", "BOSOMut",
   "ODTBoth", "ODTSqrtBoth", "MnLassoBoth", "LassoBoth", "BOSOBoth"
 )
-boxplot(treatments2)
 
 mycomparisons2 <- list(
   c("ODTExp", "ODTMut"), c("ODTMut", "ODTBoth"),
@@ -930,7 +893,6 @@ plot_all$Type[grep("Both", plot_all$Method)]<-"Both"
 plot_all$Type[ which(plot_all$Method == "MOM")] <- "Mut"
 plot_all$Type[ which(plot_all$Method == "KRL")] <- "Mut"
 
-
 plot_all<-plot_all[order(plot_all$Method),]
 plot_all$General_Method<-"unknown"
 plot_all$General_Method[grep("Oracle", plot_all$Method)]<-"Oracle"
@@ -947,12 +909,13 @@ plot_all$Method<-factor(plot_all$Method, levels=c("Oracle","MOM","KRL","BOSOExp"
                                                   "ODTSqrtExp","ODTSqrtMut", "ODTSqrtBoth",
                                                   "LassoExp","LassoMut","LassoBoth",
                                                   "MnLassoExp","MnLassoMut","MnLassoBoth"))
+
 plot_all$General_Method<-factor(plot_all$General_Method, levels=c("Oracle", "MOM","KRL","BOSO", "ODT","ODTSqrt", "Lasso", "MnLasso"))
 
 plot_all$Type<-factor(plot_all$Type, levels=c("GE", "Mut", "Both"))
 
 colors <- c("#A83333","#367592", "#39A7AE", "#96D6B6", "#FDE5B0", "#F3908B", "#E36192", "#8E4884")
-#mypal<-mypal[c(1,2:8)]
+
 gg_ex_both<-ggplot(plot_all, aes(x=Method, y=IC50, fill=General_Method))+    # Different pattern for each group
   geom_boxplot_pattern(
     pattern_color = "black",
@@ -969,8 +932,7 @@ gg_ex_both<-ggplot(plot_all, aes(x=Method, y=IC50, fill=General_Method))+    # D
         plot.background = element_rect(fill = "transparent", size = 0, color = "transparent"),
         panel.background = element_rect(fill = "transparent"))
 gg_ex_both
-ggsave(paste(folder_dir,"Rimages/boxplot_all.png",sep=""), gg_ex_both, width = 17, height = 7, dpi = 1000)
-
+ggsave(paste(folder_dir,"/images/boxplot_all.png",sep=""), gg_ex_both, width = 17, height = 7, dpi = 1000)
 
 # Train with BOTH expression AND mutations data and test in waves 3+4
 # ODTMut
@@ -1012,8 +974,8 @@ treatmentOracle_w34 <- apply(drug_response_w34, 1, which.min)
 
 # save(ODTBoth_All, ODTSqrtBoth_All, MnLassoBoth_All,LassoBoth_All, BOSOBoth_All, file = paste(folder_dir,"Rdata/both_models_all.RData",sep=""))
 # save(treatmentODTBoth_w34, treatmentODTSqrtBoth_w34, treatmentMnLassoBoth_w34, treatmentLassoBoth_w34, treatmentBOSOBoth_w34, file = paste(folder_dir,"Rdata/both_results_test.RData",sep=""))
-load(paste(folder_dir,"Rdata/both_models_all.RData",sep=""))
-load(paste(folder_dir,"Rdata/both_results_test.RData",sep=""))
+load(paste(folder_dir,"/both_models_all.RData",sep=""))
+load(paste(folder_dir,"/both_results_test.RData",sep=""))
 
 ### Plotting BeatAML Cross-validation Results and comparing means difference
 treatment_plot_test_both<-data.frame(Method="ORACLE", IC50=drug_response_w34[cbind(1:nrow(drug_response_w34),treatmentOracle_w34)])
@@ -1035,8 +997,7 @@ treatment_plot_test_both_gg <- ggplot(treatment_plot_test_both, aes(x=Method, y=
         plot.background = element_rect(fill = "transparent", size = 0, color = "transparent"),
         panel.background = element_rect(fill = "transparent"))
 treatment_plot_test_both_gg
-ggsave(paste(folder_dir,"Rimages/boxplot_both_test.png",sep=""), treatment_plot_test_both_gg, width = 18, height = 7, dpi = 1000)
-
+ggsave(paste(folder_dir,"/images/boxplot_both_test.png",sep=""), treatment_plot_test_both_gg, width = 18, height = 7, dpi = 1000)
 
 # Plot all TEST results!!! WAVES 3+4
 treatmentOracle3 <- apply(drug_response_w34, 1, which.min)
@@ -1044,7 +1005,7 @@ treatmentOracle3 <- apply(drug_response_w34, 1, which.min)
 treatments3 <- cbind(
   drug_response_w34[cbind(1:nrow(drug_response_w34), treatmentOracle3)],
   treatmentMOM_w34$IC50,
-  treatmentKRL_w34$IC50, # CAMBIAR
+  treatmentKRL_w34$IC50, 
   drug_response_w34[cbind(1:nrow(drug_response_w34), treatmentODTExp_w34)],
   drug_response_w34[cbind(1:nrow(drug_response_w34), treatmentODTSqrtExp_w34)],
   drug_response_w34[cbind(1:nrow(drug_response_w34), treatmentMnLassoExp_w34)],
@@ -1096,8 +1057,6 @@ plot_all$Method<-factor(plot_all$Method, levels=c("Oracle","MOM","KRL","BOSOExp"
 plot_all$General_Method<-factor(plot_all$General_Method, levels=c("Oracle", "MOM","KRL","BOSO", "ODT","ODTSqrt", "Lasso", "MnLasso"))
 plot_all$Type<-factor(plot_all$Type, levels=c("GE", "Mut", "Both"))
 
-
-# mypal<-mypal[c(1,3:7)]
 gg_ex_both<-ggplot(plot_all, aes(x=Method, y=IC50, fill=General_Method))+    # Different pattern for each group
   geom_boxplot_pattern(
     pattern_color = "black",
@@ -1116,4 +1075,4 @@ gg_ex_both<-ggplot(plot_all, aes(x=Method, y=IC50, fill=General_Method))+    # D
         plot.background = element_rect(fill = "transparent", size = 0, color = "transparent" ),
         panel.background = element_rect(fill = "transparent"))
 gg_ex_both
-ggsave(paste(folder_dir,"Rimages/boxplot_all_test.png",sep=""), gg_ex_both, width = 17, height = 7, dpi = 1000)
+ggsave(paste(folder_dir,"/images/boxplot_all_test.png",sep=""), gg_ex_both, width = 17, height = 7, dpi = 1000)
