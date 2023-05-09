@@ -4,10 +4,7 @@
 # Supervisor: Angel Rubio
 ################################################################################
 
-
-
 library(reticulate)
-# use_python("C:/Users/mgimenoc/Anaconda3/envs/Tesis/python.exe")
 use_python("C:/Users/ksada/Anaconda3/envs/AML_Patients_PHD/python.exe")
 
 library(impute)
@@ -30,10 +27,10 @@ library(DT)
 library("dplyr")
 library(tictoc)
 
-source("./MOM/2022-05-24_MOM_source_Functions.R")
+source("./MOM/MOM_source_Functions.R")
 
 # Folder to save results
-folder_dir <- "C:/Users/ksada/OneDrive - Tecnun/Paper XAI Methods/Rresults/"
+folder_dir <- "./data/output"
 
 # Loading Data -------------------------------------------- 
 # Load clinical data 
@@ -203,18 +200,8 @@ rm(list = c("p","j","out", "translocations_clinical", "trans_matrix", "drug_matr
 
 patient_names<-rownames(drug_response_matrix_MOM)
 
-# drug_ori<-drug
-# mut_ori<-mut
-# 
-# identical(colnames(drug), colnames(drug_ori))
-# set.seed()
-
 patient_names<-cbind(patient_names, kfold=sample(1:5,length(patient_names), replace=TRUE))
 patient_names<-as.data.frame(patient_names)
-
-# pat_kfold<-as.character(patient_names$patient_names[which(patient_names$kfold==11)])
-# patient_final_Validation_drug<-drug[pat_kfold,]
-# patient_final_Validation_mut<-mut[pat_kfold,]
 
 drug_ori<-drug_response_matrix_MOM
 mut_ori<-mutations
@@ -261,10 +248,11 @@ for(kfold in 1:5){
 treatmentMOM<-Results_CV_pat
 treatmentMOM$IC50<-treatmentMOM$IC50-min(drug_ori)
 MOM<-MILP_classification
-save(MOM, file = paste(folder_dir,"Rdata/MOM_model.RData",sep=""))
-save(treatmentMOM, file = paste(folder_dir,"Rdata/MOM_results.RData",sep=""))
-# load(paste(folder_dir,"Rdata/MOM_model.RData",sep=""))
-# load(paste(folder_dir,"Rdata/MOM_results.RData",sep=""))
+
+# save(MOM, file = paste(folder_dir,"Rdata/MOM_model.RData",sep=""))
+# save(treatmentMOM, file = paste(folder_dir,"Rdata/MOM_results.RData",sep=""))
+load(paste(folder_dir,"/MOM_model.RData",sep=""))
+load(paste(folder_dir,"/MOM_results.RData",sep=""))
 
 ### COMPARISON AGAINST ORACLE---------------------------------------------------
 drug<-drug_ori-min(drug_ori)
@@ -278,10 +266,10 @@ ORACLE$Patient<-rownames(ORACLE)
 aux<-apply(ORACLE, 1, FUN=function(X){return(IC50<-drug[X[3], X[2]])})
 
 ORACLE$IC50<-aux[rownames(ORACLE)]
-MOM<-Results_CV_pat
+MOM<-treatmentMOM
 MOM$IC50<-MOM$IC50-min(drug_ori)
 
-boxplot(ORACLE$IC50, MOM$IC50, names = c("ORACLE", "MOM"), ylab="IC50*", ylim=c(0,5))
+boxplot(ORACLE$IC50, MOM$IC50, names = c("ORACLE", "MOM"), ylab="IC50*")
 
 ORACLE_plot<-data.frame(Treatment=ORACLE$Drug, 
                         IC50=ORACLE$IC50, 
@@ -291,19 +279,10 @@ ORACLE_plot<-data.frame(Treatment=ORACLE$Drug,
 
 ORACLE_plot<-rbind(ORACLE_plot,cbind(MOM, Method="MOM"))
 
-
-ggplot(ORACLE_plot, aes(x=Method, y=IC50, fill=Method))+geom_boxplot()+theme_bw()+ylim(0,5)+ylab("IC50*")
-
-
+ggplot(ORACLE_plot, aes(x=Method, y=IC50, fill=Method))+geom_boxplot()+theme_bw()+ylab("IC50*")
 
 MOM$DeltaIC50<-abs(MOM$IC50-ORACLE$IC50[na.omit(match(ORACLE$Patient,MOM$Pat_name))])
 MOM$Score<-median(MOM$DeltaIC50)
-
-
-
-
-# save(MOM, ORACLE, file="./data/output/mom_COMPARISON.RData")
-
 
 # Train the model with all the data---------------------------------------------
 tic()
@@ -314,7 +293,7 @@ IC50<-output$`IC50*`
 PT<-output$PT
 P<-nrow(PT)
 Treat<-ncol(PT)
-S<-4 # AÑADIIIIIIIIR
+S<-4 # ADD TO FUNCTION!!!! 
 tic()
 sol_pat<-MOM_MILP(IC50, PT)
 toc()
@@ -328,11 +307,10 @@ toc()
 treatmentMOM_w34<-Prediction34
 treatmentMOM_w34$IC50<-treatmentMOM_w34$IC50-min(drug_response_w34)
 MOM_All <- MILP_classification
-save(MOM_All, file = paste(folder_dir,"Rdata/MOM_model_all.RData",sep=""))
-save(treatmentMOM_w34, file = paste(folder_dir,"Rdata/MOM_results_test.RData",sep=""))
-load(paste(folder_dir,"Rdata/MOM_model_all.RData",sep=""))
-load(paste(folder_dir,"Rdata/MOM_results_test.RData",sep=""))
-
+# save(MOM_All, file = paste(folder_dir,"Rdata/MOM_model_all.RData",sep=""))
+# save(treatmentMOM_w34, file = paste(folder_dir,"Rdata/MOM_results_test.RData",sep=""))
+load(paste(folder_dir,"/MOM_model_all.RData",sep=""))
+load(paste(folder_dir,"/MOM_results_test.RData",sep=""))
 
 drug<-drug_ori-min(drug_response_w34)
 
@@ -346,10 +324,10 @@ aux<-apply(ORACLE, 1, FUN=function(X){return(IC50<-drug[X[3], X[2]])})
 
 ORACLE$IC50<-aux[rownames(ORACLE)]
 
-MOM<-MOM_w34
+MOM<-treatmentMOM_w34
 MOM$IC50<-MOM$IC50-min(drug_ori)
 
-boxplot(ORACLE$IC50, MOM$IC50, names = c("ORACLE", "MOM"), ylab="IC50*", ylim=c(0,5))
+boxplot(ORACLE$IC50, MOM$IC50, names = c("ORACLE", "MOM"), ylab="IC50*")
 
 ORACLE_plot<-data.frame(Treatment=ORACLE$Drug, 
                         IC50=ORACLE$IC50, 
@@ -358,10 +336,7 @@ ORACLE_plot<-data.frame(Treatment=ORACLE$Drug,
 
 ORACLE_plot<-rbind(ORACLE_plot,cbind(MOM, Method="MOM"))
 
-
-ggplot(ORACLE_plot, aes(x=Method, y=IC50, fill=Method))+geom_boxplot()+theme_bw()+ylim(0,5)+ylab("IC50*")
-
-
+ggplot(ORACLE_plot, aes(x=Method, y=IC50, fill=Method))+geom_boxplot()+theme_bw()+ylab("IC50*")
 
 MOM$DeltaIC50<-abs(MOM$IC50-ORACLE$IC50[na.omit(match(ORACLE$Patient,MOM$Pat_name))])
 MOM$Score<-median(MOM$DeltaIC50)
