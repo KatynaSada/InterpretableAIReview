@@ -57,7 +57,6 @@ There are different codes to obtain the results of this project.
 - To test all algorithms (except KRL) on the GDSC dataset run [executeTestGDSC.r](https://github.com/KatynaSada/InterpretableAIReview/blob/main/executeTestGDSC.r).
 - To train and test MOM on the BeatAML2 dataset run [MOM/Main_MOM-kfold_CV_BeatAML2.R](https://github.com/KatynaSada/InterpretableAIReview/blob/main/MOM/Main_MOM-kfold_CV_BeatAML2.R).
 - To train and test KRL on BeatAML2 dataset and GDSC run [KRL/KRL/KernelizedRankLearningmaster/KRL_for_BeatAML2.ipynb](https://github.com/KatynaSada/InterpretableAIReview/blob/main/KRL/KRL/KernelizedRankLearningmaster/KRL_for_BeatAML2.ipynb). More details of this method can be found on its [folder](https://github.com/KatynaSada/InterpretableAIReview/blob/main/KRL/KRL/KernelizedRankLearningmaster/README.md).
-- 
 
 <p align="right">(<a href="#instructions">back to top</a>)</p>
 
